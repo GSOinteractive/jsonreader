@@ -157,7 +157,12 @@ class JsonReader implements ChunkJsonReaderInterface
      */
     public function readValue()
     {
+        /** @var $character string */
         $character = $this->characterIterator->getNextNonWhite();
+
+        /** @var $state integer */
+        $state = $this->getState();
+
         if ($this->structStack->count()) {
             /** For root element stack is empty yet */
             $this->structStack->top()->setState(self::STATE_VALUE);
@@ -211,6 +216,14 @@ class JsonReader implements ChunkJsonReaderInterface
             $this->readNumberValue();
 
             return;
+        }
+
+        if ($state === self::STATE_ARRAY_START) {
+            if (!$this->value && $character === ']') {
+                $this->structStack->top()->setState(self::STATE_ARRAY_END);
+
+                return;
+            }
         }
 
         throw new MalformedJsonException('Unexpected value type');
